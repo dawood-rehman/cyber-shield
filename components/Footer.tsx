@@ -1,9 +1,15 @@
+'use client'
+
 import Link from 'next/link'
-import { Shield, Mail, Phone, MessageSquare, Globe } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { Shield, Mail, Phone, MessageSquare } from 'lucide-react'
 
 export default function Footer() {
+  const pathname = usePathname()
+  const isAdminRoute = pathname.startsWith('/admin')
+
   return (
-    <footer className="relative border-t border-cyan-500/10 overflow-hidden">
+    <footer className={`relative border-t border-cyan-500/10 overflow-hidden ${isAdminRoute ? 'lg:ml-64' : ''}`}>
       {/* Background */}
       <div className="absolute inset-0 hex-pattern opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-b from-navy-800 to-navy-900" />
