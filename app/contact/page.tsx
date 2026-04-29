@@ -9,6 +9,9 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const update = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }))
+  const openChat = () => {
+    window.dispatchEvent(new CustomEvent('cybershield:open-chat'))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +32,7 @@ export default function ContactPage() {
   const channels = [
     { icon: Mail, title: 'Email Us', value: 'Support@cybershield.com', sub: "Send us an email and we'll respond as soon as possible.", action: 'Send Email', href: 'mailto:support@cybershield.com', color: 'cyan' },
     { icon: Phone, title: 'Call Us', value: '+1-800-123-4567', sub: 'Reach our 24/7 help line for immediate assistance.', action: 'Call Now', href: 'tel:+18001234567', color: 'orange' },
-    { icon: MessageSquare, title: 'Live Chat', value: 'Available 24/7', sub: 'Chat with a support agent in real-time for quick help.', action: 'Start Chat', href: '#chat', color: 'purple' },
+    { icon: MessageSquare, title: 'Live Chat', value: 'Available 24/7', sub: 'Chat with CyberShield AI in real time for quick help.', action: 'Start Chat', color: 'purple' },
   ]
 
   const colorMap: Record<string, string> = {
@@ -63,10 +66,17 @@ export default function ContactPage() {
               <h3 className="font-orbitron font-semibold text-white text-lg mb-2">{title}</h3>
               <div className="font-bold text-base mb-2">{value}</div>
               <p className="text-slate-400 text-sm mb-5">{sub}</p>
-              <a href={href}
-                className={`inline-block px-6 py-2.5 rounded-md text-sm font-orbitron font-semibold border transition-all hover:opacity-80 ${colorMap[color].split(' ')[2]} border-current bg-current/10`}>
-                {action}
-              </a>
+              {href ? (
+                <a href={href}
+                  className={`inline-block px-6 py-2.5 rounded-md text-sm font-orbitron font-semibold border transition-all hover:opacity-80 ${colorMap[color].split(' ')[2]} border-current bg-current/10`}>
+                  {action}
+                </a>
+              ) : (
+                <button type="button" onClick={openChat}
+                  className={`inline-block px-6 py-2.5 rounded-md text-sm font-orbitron font-semibold border transition-all hover:opacity-80 ${colorMap[color].split(' ')[2]} border-current bg-current/10`}>
+                  {action}
+                </button>
+              )}
             </div>
           ))}
         </div>

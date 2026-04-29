@@ -1,11 +1,4 @@
-import { Shield, Users, Target, Award, CheckCircle, Heart, Lock, Globe } from 'lucide-react'
-
-const team = [
-  { name: 'Dr. Sarah Mitchell', role: 'Lead Cybersecurity Expert', bio: '15+ years in digital security and threat analysis.', initials: 'SM', color: 'cyan' },
-  { name: 'James Rodriguez', role: 'Mental Health Specialist', bio: 'Licensed counselor specializing in digital trauma and online harassment recovery.', initials: 'JR', color: 'orange' },
-  { name: 'Aisha Patel', role: 'Legal Advocate', bio: 'Cybercrime attorney with expertise in online harassment laws and victim rights.', initials: 'AP', color: 'purple' },
-  { name: 'Liu Wei', role: 'Platform Safety Engineer', bio: 'Expert in content moderation systems and abuse prevention infrastructure.', initials: 'LW', color: 'green' },
-]
+import { Shield, Target, CheckCircle, Heart, Lock, Globe } from 'lucide-react'
 
 const values = [
   { icon: Lock, title: 'Privacy First', desc: 'We never compromise on user privacy. All data is encrypted and your identity remains protected.' },
@@ -100,28 +93,6 @@ export default function AboutPage() {
                 </div>
                 <h3 className="font-orbitron font-semibold text-white mb-2">{title}</h3>
                 <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="font-orbitron font-bold text-3xl text-white mb-4">MEET THE <span className="text-orange-400">TEAM</span></h2>
-            <p className="text-slate-400">The dedicated professionals protecting your digital world</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {team.map(({ name, role, bio, initials, color }) => (
-              <div key={name} className="cyber-card rounded-xl p-6 border border-cyan-500/20 hover:border-cyan-400/40 transition-all text-center group">
-                <div className={`w-20 h-20 rounded-full bg-${color}-500/10 border-2 border-${color}-500/40 flex items-center justify-center mx-auto mb-4 text-2xl font-orbitron font-bold text-${color}-400 group-hover:scale-110 transition-transform`}>
-                  {initials}
-                </div>
-                <h3 className="font-orbitron font-semibold text-white mb-1">{name}</h3>
-                <div className="text-cyan-400 text-xs font-orbitron tracking-wide mb-3">{role}</div>
-                <p className="text-slate-400 text-sm">{bio}</p>
               </div>
             ))}
           </div>

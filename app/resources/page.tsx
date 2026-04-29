@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import { Shield, BookOpen, Heart, Scale, Lock, Users, ArrowRight, ExternalLink } from 'lucide-react'
 
 const categories = [
@@ -62,10 +61,10 @@ const categories = [
     title: 'Community Support',
     color: 'blue',
     resources: [
-      { title: 'Anti-Cyberbullying Alliance', desc: 'Community-driven support for harassment victims', href: '#', external: true },
+      { title: 'Anti-Bullying Alliance', desc: 'Online bullying advice and support resources', href: 'https://anti-bullyingalliance.org.uk/tools-information/all-about-bullying/online-bullying/online-bullying-information-parents-and-carers', external: true },
       { title: 'Cyber Smile Foundation', desc: 'Global cyberbullying helpline and resources', href: 'https://cybersmile.org', external: true },
-      { title: 'Without My Consent', desc: 'Resources for victims of non-consensual sharing', href: '#', external: false },
-      { title: 'Online SOS', desc: 'Community guides for urgent online safety situations', href: '#', external: false },
+      { title: 'Without My Consent', desc: 'Resources for victims of non-consensual sharing', href: 'https://withoutmyconsent.org/resources', external: true },
+      { title: 'Online SOS', desc: 'Community guides for urgent online safety situations', href: 'https://www.onlinesos.org/', external: true },
     ],
   },
 ]

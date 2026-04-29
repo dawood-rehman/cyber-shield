@@ -59,8 +59,24 @@ export default function ChatbotWidget() {
   ])
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open])
+  useEffect(() => {
+    const handleOpenChat = () => {
+      setOpen(true)
+      setMinimized(false)
+    }
+
+    window.addEventListener('cybershield:open-chat', handleOpenChat)
+    return () => window.removeEventListener('cybershield:open-chat', handleOpenChat)
+  }, [])
+  useEffect(() => {
+    if (!open || minimized) return
+
+    const focusTimer = window.setTimeout(() => inputRef.current?.focus(), 100)
+    return () => window.clearTimeout(focusTimer)
+  }, [minimized, open])
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return
@@ -186,6 +202,7 @@ export default function ChatbotWidget() {
                 <div className="px-3 py-3 bg-navy-900/90 border-t border-slate-700/50 shrink-0">
                   <div className="flex gap-2">
                     <input
+                      ref={inputRef}
                       type="text"
                       placeholder="Ask about digital safety..."
                       className="cyber-input flex-1 text-sm py-2.5 px-3"
