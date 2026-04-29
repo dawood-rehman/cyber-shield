@@ -1,7 +1,8 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Shield, Eye, EyeOff } from 'lucide-react'
+import { getProviders, signIn } from 'next-auth/react'
 import { useToast } from '@/components/ToastProvider'
 
 export default function SignupPage() {
@@ -9,9 +10,37 @@ export default function SignupPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirm: '', agree: false })
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleConfigured, setGoogleConfigured] = useState(true)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
   const update = (field: string, val: any) => setForm(p => ({ ...p, [field]: val }))
+
+  useEffect(() => {
+    getProviders()
+      .then(providers => setGoogleConfigured(Boolean(providers?.google)))
+      .catch(() => setGoogleConfigured(false))
+  }, [])
+
+  const handleGoogleSignUp = async () => {
+    if (!googleConfigured) {
+      const message = 'Google signup is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env, then restart the dev server.'
+      setError(message)
+      toast.error('Google not configured', 'Add Google OAuth credentials to .env and restart the server.')
+      return
+    }
+
+    setGoogleLoading(true)
+    setError('')
+    try {
+      await signIn('google', { callbackUrl: '/api/auth/google-session?redirect=/' })
+    } catch {
+      const message = 'Google signup could not be started. Please try again.'
+      setError(message)
+      toast.error('Google signup failed', message)
+      setGoogleLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +100,18 @@ export default function SignupPage() {
           <p className="text-slate-400 text-sm text-center mb-6">Join the digital safety community</p>
 
           {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm text-center">{error}</div>}
+
+          <button type="button" onClick={handleGoogleSignUp} disabled={googleLoading}
+            className="mb-5 w-full flex items-center justify-center gap-3 py-3 border border-slate-600 rounded-lg text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all text-sm font-medium disabled:opacity-50">
+            <span className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-xs font-black text-gray-800">G</span>
+            {googleLoading ? 'Connecting to Google...' : googleConfigured ? 'Continue with Google' : 'Google signup not configured'}
+          </button>
+
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex-1 h-px bg-slate-700" />
+            <span className="text-slate-500 text-sm">OR</span>
+            <div className="flex-1 h-px bg-slate-700" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-1.5">

@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 
 type User = { userId: string; email: string; role: string; name: string; phone?: string } | null
 
@@ -64,7 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
+    await Promise.all([
+      fetch('/api/auth/logout', { method: 'POST' }),
+      signOut({ redirect: false }),
+    ])
     setUser(null)
     cacheUser(null)
     router.replace('/login')

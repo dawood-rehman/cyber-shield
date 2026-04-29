@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Shield, Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { getProviders, signIn } from 'next-auth/react'
 import { useAuth } from '@/lib/auth-context'
 import { useToast } from '@/components/ToastProvider'
 
@@ -13,12 +14,55 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [form, setForm] = useState({ email: '', password: '', remember: false })
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleConfigured, setGoogleConfigured] = useState(true)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    getProviders()
+      .then(providers => setGoogleConfigured(Boolean(providers?.google)))
+      .catch(() => setGoogleConfigured(false))
+  }, [])
+
+  useEffect(() => {
+    const errorCode = new URLSearchParams(window.location.search).get('error')
+    if (!errorCode) return
+    const message = errorCode === 'GoogleAuth'
+      ? 'Google sign-in could not be completed. Please try again.'
+      : 'Authentication failed. Please try again.'
+    setError(message)
+    toast.error('Google sign-in failed', message)
+  }, [toast])
 
   useEffect(() => {
     if (authLoading || !user) return
     router.replace(user.role === 'admin' ? '/admin' : '/')
   }, [authLoading, router, user])
+
+  const getGoogleCallbackUrl = () => {
+    const redirect = new URLSearchParams(window.location.search).get('redirect') || '/'
+    return `/api/auth/google-session?redirect=${encodeURIComponent(redirect)}`
+  }
+
+  const handleGoogleSignIn = async () => {
+    if (!googleConfigured) {
+      const message = 'Google sign-in is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to .env, then restart the dev server.'
+      setError(message)
+      toast.error('Google not configured', 'Add Google OAuth credentials to .env and restart the server.')
+      return
+    }
+
+    setGoogleLoading(true)
+    setError('')
+    try {
+      await signIn('google', { callbackUrl: getGoogleCallbackUrl() })
+    } catch {
+      const message = 'Google sign-in could not be started. Please try again.'
+      setError(message)
+      toast.error('Google sign-in failed', message)
+      setGoogleLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -109,9 +153,10 @@ export default function LoginPage() {
             <div className="flex-1 h-px bg-slate-700" />
           </div>
 
-          <button className="w-full flex items-center justify-center gap-3 py-3 border border-slate-600 rounded-lg text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all text-sm font-medium">
+          <button type="button" onClick={handleGoogleSignIn} disabled={googleLoading}
+            className="w-full flex items-center justify-center gap-3 py-3 border border-slate-600 rounded-lg text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all text-sm font-medium disabled:opacity-50">
             <span className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-xs font-black text-gray-800">G</span>
-            Continue with Google
+            {googleLoading ? 'Connecting to Google...' : googleConfigured ? 'Continue with Google' : 'Google sign-in not configured'}
           </button>
 
           <p className="text-center text-slate-400 text-sm mt-6">

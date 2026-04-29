@@ -89,24 +89,19 @@ export default function ContactPage() {
 
             <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-slate-400 text-sm mb-2">Your Name *</label>
-                <input type="text" required placeholder="Your Name" className="cyber-input"
+                <label className="block text-slate-400 text-sm mb-2">Full Name *</label>
+                <input type="text" required placeholder="Full Name" className="cyber-input"
                   value={form.name} onChange={e => update('name', e.target.value)} />
-              </div>
-              <div>
-                <label className="block text-slate-400 text-sm mb-2">Subject *</label>
-                <input type="text" required placeholder="Subject" className="cyber-input"
-                  value={form.subject} onChange={e => update('subject', e.target.value)} />
               </div>
               <div>
                 <label className="block text-slate-400 text-sm mb-2">Email Address *</label>
                 <input type="email" required placeholder="john.doe@email.com" className="cyber-input"
                   value={form.email} onChange={e => update('email', e.target.value)} />
               </div>
-              <div>
-                <label className="block text-slate-400 text-sm mb-2">Message (Optional)</label>
-                <textarea rows={1} placeholder="Message (optional)" className="cyber-input resize-none"
-                  value={form.message} onChange={e => update('message', e.target.value)} />
+              <div className="md:col-span-2">
+                <label className="block text-slate-400 text-sm mb-2">Subject *</label>
+                <input type="text" required placeholder="Subject" className="cyber-input"
+                  value={form.subject} onChange={e => update('subject', e.target.value)} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-slate-400 text-sm mb-2">Message *</label>
