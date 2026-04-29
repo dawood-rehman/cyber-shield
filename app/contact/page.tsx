@@ -1,17 +1,33 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, Phone, MessageSquare, Send, CheckCircle, MapPin, Clock } from 'lucide-react'
 import { useToast } from '@/components/ToastProvider'
+import { DEFAULT_SITE_SETTINGS, type SiteSettings } from '@/lib/site-settings'
 
 export default function ContactPage() {
   const toast = useToast()
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const update = (f: string, v: string) => setForm(p => ({ ...p, [f]: v }))
   const openChat = () => {
     window.dispatchEvent(new CustomEvent('cybershield:open-chat'))
   }
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/site-settings')
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data.settings) setSettings(data.settings)
+      } catch {
+        setSettings(DEFAULT_SITE_SETTINGS)
+      }
+    }
+
+    loadSettings()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,8 +46,8 @@ export default function ContactPage() {
   }
 
   const channels = [
-    { icon: Mail, title: 'Email Us', value: 'Support@cybershield.com', sub: "Send us an email and we'll respond as soon as possible.", action: 'Send Email', href: 'mailto:support@cybershield.com', color: 'cyan' },
-    { icon: Phone, title: 'Call Us', value: '+1-800-123-4567', sub: 'Reach our 24/7 help line for immediate assistance.', action: 'Call Now', href: 'tel:+18001234567', color: 'orange' },
+    ...(settings.supportEmail ? [{ icon: Mail, title: 'Email Us', value: settings.supportEmail, sub: "Send us an email and we'll respond as soon as possible.", action: 'Send Email', href: `mailto:${settings.supportEmail}`, color: 'cyan' }] : []),
+    ...(settings.supportPhone ? [{ icon: Phone, title: 'Call Us', value: settings.supportPhone, sub: 'Reach our 24/7 help line for immediate assistance.', action: 'Call Now', href: settings.supportPhoneHref, color: 'orange' }] : []),
     { icon: MessageSquare, title: 'Live Chat', value: 'Available 24/7', sub: 'Chat with CyberShield AI in real time for quick help.', action: 'Start Chat', color: 'purple' },
   ]
 

@@ -6,9 +6,10 @@ import {
   Shield, Eye, CheckCircle, Clock, Search, X, RefreshCw,
   FileText, Users, BarChart3, Plus, Edit2, Trash2, Save,
   AlertTriangle, BookOpen, ChevronDown, ChevronUp, LogOut,
-  MessageSquare, ToggleLeft, ToggleRight
+  MessageSquare, ToggleLeft, ToggleRight, Mail, Phone
 } from 'lucide-react'
 import { useToast } from '@/components/ToastProvider'
+import { DEFAULT_SITE_SETTINGS } from '@/lib/site-settings'
 
 type Report = {
   _id: string; reportId: string; harassmentType: string; platform: string
@@ -19,6 +20,10 @@ type Article = {
   _id: string; slug: string; title: string; excerpt: string; content: string
   category: string; readTime: string; author: string; published: boolean
   tags: string[]; createdAt: string
+}
+type ContactSettingsForm = {
+  supportEmail: string
+  supportPhone: string
 }
 
 const CATEGORIES = ['Guide','Safety','Privacy','Awareness','Protection','Mental Health','Legal','Tools']
@@ -48,6 +53,7 @@ export default function AdminPage() {
   const [rSearch, setRSearch] = useState('')
   const [updating, setUpdating] = useState<string | null>(null)
   const [noteInput, setNoteInput] = useState('')
+  const [noteSaving, setNoteSaving] = useState(false)
 
   // Articles state
   const [articles, setArticles] = useState<Article[]>([])
@@ -63,10 +69,16 @@ export default function AdminPage() {
   // Contacts state
   const [contacts, setContacts] = useState<any[]>([])
   const [cLoading, setCLoading] = useState(false)
+  const [contactSettings, setContactSettings] = useState<ContactSettingsForm>({
+    supportEmail: DEFAULT_SITE_SETTINGS.supportEmail,
+    supportPhone: DEFAULT_SITE_SETTINGS.supportPhone,
+  })
+  const [settingsLoading, setSettingsLoading] = useState(false)
+  const [settingsSaving, setSettingsSaving] = useState(false)
 
   useEffect(() => {
     if (!loading && (!user || user.role !== 'admin')) { router.push('/login'); return }
-    if (user?.role === 'admin') { fetchReports(); fetchArticles() }
+    if (user?.role === 'admin') { fetchReports(); fetchArticles(); fetchSiteSettings() }
   }, [user, loading])
 
   const fetchReports = useCallback(async () => {
@@ -111,7 +123,29 @@ export default function AdminPage() {
     finally { setCLoading(false) }
   }, [toast])
 
-  useEffect(() => { if (tab === 'contacts') fetchContacts() }, [tab])
+  const fetchSiteSettings = useCallback(async () => {
+    setSettingsLoading(true)
+    try {
+      const res = await fetch('/api/site-settings')
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Failed to load contact information')
+      const settings = data.settings || DEFAULT_SITE_SETTINGS
+      setContactSettings({
+        supportEmail: settings.supportEmail || '',
+        supportPhone: settings.supportPhone || '',
+      })
+    } catch (err: any) {
+      toast.error('Contact info unavailable', err.message || 'Failed to load contact information')
+    }
+    finally { setSettingsLoading(false) }
+  }, [toast])
+
+  useEffect(() => {
+    if (tab === 'contacts') {
+      fetchContacts()
+      fetchSiteSettings()
+    }
+  }, [tab])
 
   const handleLogout = async () => {
     await logout()
@@ -124,17 +158,67 @@ export default function AdminPage() {
       const res = await fetch(`/api/reports/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminNotes: noteInput }),
+        body: JSON.stringify({ status }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.message || 'Failed to update report')
-      setReports(prev => prev.map(r => r._id === id ? { ...r, status, adminNotes: noteInput } : r))
-      if (selectedReport?._id === id) setSelectedReport(prev => prev ? { ...prev, status, adminNotes: noteInput } : null)
+      setReports(prev => prev.map(r => r._id === id ? { ...r, status } : r))
+      if (selectedReport?._id === id) setSelectedReport(prev => prev ? { ...prev, status } : null)
       toast.success('Report updated', `Status changed to ${status}.`)
     } catch (err: any) {
       toast.error('Update failed', err.message || 'Failed to update report')
     }
     finally { setUpdating(null) }
+  }
+
+  const submitAdminNote = async () => {
+    if (!selectedReport) return
+    setNoteSaving(true)
+    try {
+      const adminNotes = noteInput.trim()
+      const res = await fetch(`/api/reports/${selectedReport._id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNotes }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Failed to submit note')
+      setReports(prev => prev.map(r => r._id === selectedReport._id ? { ...r, adminNotes } : r))
+      setSelectedReport(prev => prev ? { ...prev, adminNotes } : null)
+      setNoteInput(adminNotes)
+      toast.success('Admin note submitted', 'The user can now see this note in My Reports.')
+    } catch (err: any) {
+      toast.error('Note failed', err.message || 'Failed to submit note')
+    }
+    finally { setNoteSaving(false) }
+  }
+
+  const saveContactSettings = async (nextSettings = contactSettings) => {
+    setSettingsSaving(true)
+    try {
+      const res = await fetch('/api/site-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextSettings),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.message || 'Failed to update contact information')
+      const settings = data.settings || nextSettings
+      setContactSettings({
+        supportEmail: settings.supportEmail || '',
+        supportPhone: settings.supportPhone || '',
+      })
+      toast.success('Contact information saved', 'Contact page and footer will use the updated values.')
+    } catch (err: any) {
+      toast.error('Save failed', err.message || 'Failed to update contact information')
+    }
+    finally { setSettingsSaving(false) }
+  }
+
+  const removeContactSetting = async (field: keyof ContactSettingsForm) => {
+    const nextSettings = { ...contactSettings, [field]: '' }
+    setContactSettings(nextSettings)
+    await saveContactSettings(nextSettings)
   }
 
   const openArticleForm = (a?: Article) => {
@@ -433,9 +517,21 @@ export default function AdminPage() {
                           <div className="bg-navy-900/80 rounded-lg p-3 text-slate-300 text-xs leading-relaxed max-h-32 overflow-y-auto border border-slate-700/40">{selectedReport.details}</div>
                         </div>
                         <div>
-                          <div className="text-slate-500 text-xs font-orbitron mb-2">ADMIN NOTES</div>
+                          <div className="text-slate-500 text-xs font-orbitron mb-2">ADMIN NOTE TO USER</div>
                           <textarea rows={3} value={noteInput} onChange={e => setNoteInput(e.target.value)}
-                            placeholder="Add internal notes..." className="cyber-input text-xs resize-none" />
+                            placeholder="Write an update the user can see..." className="cyber-input text-xs resize-none" />
+                          <div className="mt-2 flex gap-2">
+                            <button type="button" onClick={submitAdminNote}
+                              disabled={noteSaving || noteInput.trim() === (selectedReport.adminNotes || '')}
+                              className="btn-cyber flex-1 py-2 rounded-lg text-xs flex items-center justify-center gap-2 disabled:opacity-50">
+                              {noteSaving ? <div className="cyber-spinner w-3 h-3" /> : <><Save className="w-3 h-3" /> Submit Note</>}
+                            </button>
+                            <button type="button" onClick={() => setNoteInput('')}
+                              className="btn-outline px-3 py-2 rounded-lg text-xs">
+                              Clear
+                            </button>
+                          </div>
+                          <p className="mt-2 text-[11px] text-slate-500">This note is visible to the report owner in My Reports.</p>
                         </div>
                         <div>
                           <div className="text-slate-500 text-xs font-orbitron mb-2">UPDATE STATUS</div>
@@ -609,6 +705,58 @@ export default function AdminPage() {
                 <button onClick={fetchContacts} className="btn-outline flex items-center gap-2 px-4 py-2 text-sm rounded-lg">
                   <RefreshCw className="w-4 h-4" /> Refresh
                 </button>
+              </div>
+              <div className="cyber-card rounded-xl border border-cyan-500/15 p-5">
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <div>
+                    <h2 className="font-orbitron font-semibold text-white">Contact Page Info</h2>
+                    <p className="text-slate-500 text-xs mt-1">Update the email and phone shown on Contact Us and Footer.</p>
+                  </div>
+                  {settingsLoading && <div className="cyber-spinner w-5 h-5" />}
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-slate-400 text-xs font-orbitron tracking-wide flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5 text-cyan-400" /> SUPPORT EMAIL
+                    </label>
+                    <input
+                      type="email"
+                      className="cyber-input text-sm"
+                      placeholder="support@cybershield.com"
+                      value={contactSettings.supportEmail}
+                      onChange={e => setContactSettings(p => ({ ...p, supportEmail: e.target.value }))}
+                    />
+                    <button type="button" onClick={() => removeContactSetting('supportEmail')}
+                      disabled={settingsSaving || !contactSettings.supportEmail}
+                      className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40">
+                      Remove email
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-slate-400 text-xs font-orbitron tracking-wide flex items-center gap-2">
+                      <Phone className="w-3.5 h-3.5 text-orange-400" /> SUPPORT PHONE
+                    </label>
+                    <input
+                      type="text"
+                      className="cyber-input text-sm"
+                      placeholder="+1-800-123-4567"
+                      value={contactSettings.supportPhone}
+                      onChange={e => setContactSettings(p => ({ ...p, supportPhone: e.target.value }))}
+                    />
+                    <button type="button" onClick={() => removeContactSetting('supportPhone')}
+                      disabled={settingsSaving || !contactSettings.supportPhone}
+                      className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40">
+                      Remove phone
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-5 flex justify-end">
+                  <button type="button" onClick={() => saveContactSettings()}
+                    disabled={settingsSaving}
+                    className="btn-cyber px-5 py-2.5 rounded-lg text-sm flex items-center gap-2 disabled:opacity-50">
+                    {settingsSaving ? <div className="cyber-spinner w-4 h-4" /> : <><Save className="w-4 h-4" /> Save Contact Info</>}
+                  </button>
+                </div>
               </div>
               {cLoading ? (
                 <div className="flex items-center justify-center py-20"><div className="cyber-spinner" /></div>

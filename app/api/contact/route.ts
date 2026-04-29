@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server'
+import jwt from 'jsonwebtoken'
+import { cookies } from 'next/headers'
 import { connectDB } from '@/lib/mongodb'
 import Contact from '@/lib/models/Contact'
+
+const JWT_SECRET = process.env.JWT_SECRET || 'cybershield-secret-key-2026'
+
+function getAuth(token?: string) {
+  if (!token) return null
+  try { return jwt.verify(token, JWT_SECRET) as any } catch { return null }
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,6 +31,12 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
+    const cookieStore = cookies()
+    const decoded = getAuth(cookieStore.get('auth-token')?.value)
+    if (!decoded || decoded.role !== 'admin') {
+      return NextResponse.json({ message: 'Admin access required' }, { status: 403 })
+    }
+
     await connectDB()
     const messages = await Contact.find().sort({ createdAt: -1 }).lean().maxTimeMS(5000)
     return NextResponse.json({ messages })

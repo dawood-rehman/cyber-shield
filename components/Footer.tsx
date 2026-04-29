@@ -1,12 +1,29 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Shield, Mail, Phone, MessageSquare } from 'lucide-react'
+import { DEFAULT_SITE_SETTINGS, type SiteSettings } from '@/lib/site-settings'
 
 export default function Footer() {
   const pathname = usePathname()
   const isAdminRoute = pathname.startsWith('/admin')
+  const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SITE_SETTINGS)
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const res = await fetch('/api/site-settings')
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && data.settings) setSettings(data.settings)
+      } catch {
+        setSettings(DEFAULT_SITE_SETTINGS)
+      }
+    }
+
+    loadSettings()
+  }, [])
 
   return (
     <footer className={`relative border-t border-cyan-500/10 overflow-hidden ${isAdminRoute ? 'lg:ml-64' : ''}`}>
@@ -85,14 +102,18 @@ export default function Footer() {
           <div>
             <h3 className="font-orbitron text-sm font-semibold text-slate-300 mb-5 uppercase tracking-widest">Contact Us</h3>
             <ul className="space-y-4 mb-6">
-              <li className="flex items-center gap-3 text-sm text-slate-400">
-                <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
-                <a href="mailto:support@cybershield.com" className="hover:text-cyan-400 transition-colors">support@cybershield.com</a>
-              </li>
-              <li className="flex items-center gap-3 text-sm text-slate-400">
-                <Phone className="w-4 h-4 text-cyan-400 shrink-0" />
-                <a href="tel:+18001234567" className="hover:text-cyan-400 transition-colors">+1-800-123-4567</a>
-              </li>
+              {settings.supportEmail && (
+                <li className="flex items-center gap-3 text-sm text-slate-400">
+                  <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <a href={`mailto:${settings.supportEmail}`} className="hover:text-cyan-400 transition-colors">{settings.supportEmail}</a>
+                </li>
+              )}
+              {settings.supportPhone && (
+                <li className="flex items-center gap-3 text-sm text-slate-400">
+                  <Phone className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <a href={settings.supportPhoneHref} className="hover:text-cyan-400 transition-colors">{settings.supportPhone}</a>
+                </li>
+              )}
               <li className="flex items-center gap-3 text-sm text-slate-400">
                 <MessageSquare className="w-4 h-4 text-cyan-400 shrink-0" />
                 <Link href="/contact" className="hover:text-cyan-400 transition-colors">Live Chat Support</Link>

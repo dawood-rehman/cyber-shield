@@ -8,7 +8,7 @@ import { useToast } from '@/components/ToastProvider'
 
 type Report = {
   _id: string; reportId: string; harassmentType: string; platform: string
-  date?: string; details: string; status: string; createdAt: string
+  date?: string; details: string; status: string; createdAt: string; adminNotes?: string
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -156,6 +156,14 @@ export default function MyReportsPage() {
                         {r.details}
                       </div>
                     </div>
+                    {r.adminNotes?.trim() && (
+                      <div className="mt-4">
+                        <div className="text-slate-500 text-xs font-orbitron mb-2">ADMIN NOTE</div>
+                        <div className="bg-cyan-500/10 rounded-lg p-4 text-slate-200 text-sm leading-relaxed border border-cyan-500/30">
+                          {r.adminNotes}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Status timeline */}
                     <div className="mt-4 pt-4 border-t border-slate-700/30">
